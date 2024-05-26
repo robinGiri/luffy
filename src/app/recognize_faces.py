@@ -7,7 +7,76 @@ import speech_recognition as sr
 import pyttsx3
 import threading
 import queue
-from deepface import DeepFace
+from scipy.signal import medfilt
+
+def noise_cancellation(audio_data, sampling_rate):
+    filtered_audio = medfilt(audio_data, kernel_size=3)
+    return filtered_audio
+
+def train_model(data_dir="data", model_save_path="models/face_recognition_model.pkl"):
+    if os.path.exists(model_save_path):
+        with open(model_save_path, "rb") as f:
+            existing_model = pickle.load(f)
+        known_encodings = existing_model["encodings"]
+        known_names = existing_model["names"]
+    else:
+        known_encodings = []
+        known_names = []
+
+    for person_name in os.listdir(data_dir):
+        person_dir = os.path.join(data_dir, person_name)
+        if not os.path.isdir(person_dir):
+            continue
+
+        for img_name in os.listdir(person_dir):
+            img_path = os.path.join(person_dir, img_name)
+            image = face_recognition.load_image_file(img_path)
+            encodings = face_recognition.face_encodings(image)
+            if encodings:
+                known_encodings.append(encodings[0])
+                known_names.append(person_name)
+
+    model = {"encodings": known_encodings, "names": known_names}
+    os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
+    with open(model_save_path, "wb") as f:
+        pickle.dump(model, f)
+    print("Model trained and saved at:", model_save_path)
+
+def capture_images(person_name, save_dir="data", max_images=50):
+    cap = cv2.VideoCapture(0)
+    person_dir = os.path.join(save_dir, person_name)
+    os.makedirs(person_dir, exist_ok=True)
+
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+    count = 0
+    while count < max_images:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+
+        for (x, y, w, h) in faces:
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+
+            face_img = frame[y:y+h, x:x+w]
+            img_path = os.path.join(person_dir, f"{count}.jpg")
+            cv2.imwrite(img_path, face_img)
+            count += 1
+            print(f"Image {count} captured")
+
+        cv2.imshow("Capturing Images - Press 'q' to quit", frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+    print(f"Captured {count} images for {person_name}")
+    train_model()
+    recognize_faces()
 
 def recognize_faces(model_path="models/face_recognition_model.pkl"):
     if not os.path.exists(model_path):
@@ -23,12 +92,13 @@ def recognize_faces(model_path="models/face_recognition_model.pkl"):
         print("Error: Could not open video capture")
         return
 
-    print("Starting video capture. Press 'q' to quit.")
+    print("Starting video capture. Press 'q' to quit. Say 'capture' to start capturing images.")
 
     engine = pyttsx3.init()
     
     recognized_names = []
     speech_queue = queue.Queue()
+    capture_queue = queue.Queue()
 
     def recognize_speech():
         recognizer = sr.Recognizer()
@@ -36,9 +106,14 @@ def recognize_faces(model_path="models/face_recognition_model.pkl"):
 
         while True:
             with mic as source:
-                print("Listening for 'hello' or 'hi'...")
-                audio = recognizer.listen(source, phrase_time_limit=3)
+                print("Listening for commands...")
+                audio = recognizer.listen(source, phrase_time_limit=5)
             try:
+                audio_data = np.frombuffer(audio.frame_data, dtype=np.int16)
+                sample_rate = audio.sample_rate
+                audio_data = noise_cancellation(audio_data, sample_rate)
+                audio = sr.AudioData(audio_data.tobytes(), sample_rate, 2)
+                
                 speech_text = recognizer.recognize_google(audio)
                 print(f"Recognized Speech: {speech_text}")
                 speech_queue.put(speech_text.lower())
@@ -73,6 +148,8 @@ def recognize_faces(model_path="models/face_recognition_model.pkl"):
                             break
                 else:
                     threading.Thread(target=greet_unknown).start()
+            elif "capture" in speech_text:
+                capture_queue.put("start_capture")
 
     def process_frame():
         nonlocal recognized_names
@@ -82,6 +159,7 @@ def recognize_faces(model_path="models/face_recognition_model.pkl"):
             return None, None, None
         
         small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+        
         rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
         
         face_locations = face_recognition.face_locations(rgb_small_frame)
@@ -120,11 +198,33 @@ def recognize_faces(model_path="models/face_recognition_model.pkl"):
                 print(f"Emotion detection error: {e}")
 
             cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+
             cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
             font = cv2.FONT_HERSHEY_DUPLEX
             cv2.putText(frame, f"{name} - {emotions[-1]}", (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
 
         return frame, recognized_names, emotions
+
+    def get_person_name():
+        recognizer = sr.Recognizer()
+        mic = sr.Microphone()
+        while True:
+            with mic as source:
+                print("Listening for the person's name...")
+                audio = recognizer.listen(source, phrase_time_limit=5)
+            try:
+                audio_data = np.frombuffer(audio.frame_data, dtype=np.int16)
+                sample_rate = audio.sample_rate
+                audio_data = noise_cancellation(audio_data, sample_rate)
+                audio = sr.AudioData(audio_data.tobytes(), sample_rate, 2)
+                speech_text = recognizer.recognize_google(audio)
+                print(f"Recognized Name: {speech_text}")
+                return speech_text
+            except sr.UnknownValueError:
+                print("Name could not be recognized. Please try again.")
+            except sr.RequestError as e:
+                print(f"Could not request results from Google Speech Recognition service: {e}")
+                return None
 
     speech_thread = threading.Thread(target=recognize_speech)
     greeting_thread = threading.Thread(target=handle_greeting)
@@ -138,6 +238,13 @@ def recognize_faces(model_path="models/face_recognition_model.pkl"):
 
         if frame is not None:
             cv2.imshow("Recognize Faces - Press 'q' to quit", frame)
+
+        if not capture_queue.empty():
+            command = capture_queue.get()
+            if command == "start_capture":
+                person_name = get_person_name()
+                if person_name:
+                    capture_images(person_name)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
