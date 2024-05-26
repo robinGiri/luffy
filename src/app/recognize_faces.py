@@ -8,6 +8,16 @@ import pyttsx3
 import threading
 import queue
 from scipy.signal import medfilt
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
+from deepface import DeepFace
+
+# Load pre-trained model and tokenizer
+model_name = "gpt2"  # You can use "gpt2-medium", "gpt2-large", "gpt2-xl" for larger models
+gpt_model = GPT2LMHeadModel.from_pretrained(model_name)
+tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+
+# Ensure padding token is set correctly
+tokenizer.pad_token = tokenizer.eos_token
 
 def noise_cancellation(audio_data, sampling_rate):
     filtered_audio = medfilt(audio_data, kernel_size=3)
@@ -122,34 +132,30 @@ def recognize_faces(model_path="models/face_recognition_model.pkl"):
             except sr.RequestError as e:
                 print(f"Could not request results from Google Speech Recognition service: {e}")
 
-    def greet_user(name, emotion=None):
-        greeting = f"Hello, {name}!"
-        if emotion:
-            greeting += f" You seem to be {emotion}."
-        engine.say(greeting)
-        engine.runAndWait()
 
-    def greet_unknown(emotion=None):
-        greeting = "Hey there!"
-        if emotion:
-            greeting += f" You seem to be {emotion}."
-        engine.say(greeting)
-        engine.runAndWait()
+    def generate_response(prompt, max_length=100):
+        inputs = tokenizer.encode(prompt, return_tensors='pt')
+        attention_mask = inputs.ne(tokenizer.pad_token_id).long()
+        outputs = gpt_model.generate(
+            inputs,
+            max_length=max_length,
+            pad_token_id=tokenizer.eos_token_id,
+            attention_mask=attention_mask,
+            num_return_sequences=1,
+            no_repeat_ngram_size=2,
+            early_stopping=True,
+        )
+        response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        return response
 
     def handle_greeting():
         while True:
             speech_text = speech_queue.get()
             print(f"Processing speech: {speech_text}")
-            if "hello" in speech_text or "hi" in speech_text:
-                if recognized_names:
-                    for name in recognized_names:
-                        if name != "Unknown":
-                            threading.Thread(target=greet_user, args=(name,)).start()
-                            break
-                else:
-                    threading.Thread(target=greet_unknown).start()
-            elif "capture" in speech_text:
-                capture_queue.put("start_capture")
+            response = generate_response(speech_text)
+            print(f"AI Response: {response}")
+            engine.say(response)
+            engine.runAndWait()
 
     def process_frame():
         nonlocal recognized_names
@@ -190,7 +196,6 @@ def recognize_faces(model_path="models/face_recognition_model.pkl"):
             face_frame = frame[top:bottom, left:right]
             try:
                 analysis = DeepFace.analyze(face_frame, actions=['emotion'], enforce_detection=False)
-                print(f"Emotion analysis: {analysis}")
                 emotion = analysis[0]['dominant_emotion']
                 emotions.append(emotion)
             except Exception as e:
