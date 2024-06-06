@@ -1,0 +1,4 @@
+transformers
+pyyaml
+psutil
+langchain

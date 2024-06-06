@@ -1,15 +1,28 @@
-from src.app.capture_images import capture_images
-from src.app.train_model import train_model
-from src.app.recognize_faces import recognize_faces
+import logging
+import psutil
+from utils.text_generation import generate_text
+import torch.multiprocessing as mp
+
+# Set start method to 'spawn' for compatibility and avoid resource tracking issues
+mp.set_start_method('spawn')
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+
+def log_memory_usage():
+    process = psutil.Process()
+    memory_info = process.memory_info()
+    logging.info(f"Memory usage: {memory_info.rss / 1024 ** 2:.2f} MB")
 
 if __name__ == "__main__":
-    choice = input("Choose an option:\n1. Capture Images\n2. Train Model\n3. Recognize Faces\n")
-    if choice == '1':
-        person_name = input("Enter the name of the person: ")
-        capture_images(person_name)
-    elif choice == '2':
-        train_model()
-    elif choice == '3':
-        recognize_faces()
-    else:
-        print("Invalid choice!")
+    try:
+        log_memory_usage()
+        while True:
+            input_text = input("Enter your question (or 'exit' to quit): ")
+            if input_text.lower() == 'exit':
+                break
+            output_text = generate_text(input_text)
+            print(output_text)
+            log_memory_usage()
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")

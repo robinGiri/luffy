@@ -1,0 +1,4 @@
+model_name: "EleutherAI/gpt-neo-125M"
+max_length: 50
+top_k: 50
+top_p: 0.95
