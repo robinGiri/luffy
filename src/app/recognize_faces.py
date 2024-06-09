@@ -10,6 +10,7 @@ import queue
 from scipy.signal import medfilt
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 from deepface import DeepFace
+from emoji_translate.emoji_translate import Translator
 
 # Load pre-trained model and tokenizer
 model_name = "gpt2"  # You can use "gpt2-medium", "gpt2-large", "gpt2-xl" for larger models
@@ -18,7 +19,6 @@ tokenizer = GPT2Tokenizer.from_pretrained(model_name)
 
 # Ensure padding token is set correctly
 tokenizer.pad_token = tokenizer.eos_token
-
 def noise_cancellation(audio_data, sampling_rate):
     filtered_audio = medfilt(audio_data, kernel_size=3)
     return filtered_audio
@@ -146,6 +146,12 @@ def recognize_faces(model_path="models/face_recognition_model.pkl"):
             early_stopping=True,
         )
         response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        
+        #emotion response
+        emo = Translator(exact_match_only=False, randomize=True)
+        print(emo.emojify(response)) 
+        
+        print(response)
         return response
 
     def handle_greeting():
