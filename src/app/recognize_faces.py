@@ -11,10 +11,13 @@ from scipy.signal import medfilt
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 from deepface import DeepFace
 
-# Load pre-trained model and tokenizer
-model_name = "gpt2"  # You can use "gpt2-medium", "gpt2-large", "gpt2-xl" for larger models
-gpt_model = GPT2LMHeadModel.from_pretrained(model_name)
+# Load the trained GPT-2 model and tokenizer
+model_name = "gpt2"  # The base model name, used to load the tokenizer
+trained_model_path = "models/gpt2_pixar_movies_model"  # Path to the directory with the trained model
+
+# Load tokenizer and model
 tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+gpt_model = GPT2LMHeadModel.from_pretrained(trained_model_path)
 
 # Ensure padding token is set correctly
 tokenizer.pad_token = tokenizer.eos_token
@@ -132,7 +135,6 @@ def recognize_faces(model_path="models/face_recognition_model.pkl"):
             except sr.RequestError as e:
                 print(f"Could not request results from Google Speech Recognition service: {e}")
 
-
     def generate_response(prompt, max_length=100):
         inputs = tokenizer.encode(prompt, return_tensors='pt')
         attention_mask = inputs.ne(tokenizer.pad_token_id).long()
@@ -231,31 +233,37 @@ def recognize_faces(model_path="models/face_recognition_model.pkl"):
                 print(f"Could not request results from Google Speech Recognition service: {e}")
                 return None
 
-    speech_thread = threading.Thread(target=recognize_speech)
-    greeting_thread = threading.Thread(target=handle_greeting)
-    speech_thread.daemon = True
-    greeting_thread.daemon = True
-    speech_thread.start()
-    greeting_thread.start()
+    def cleanup():
+        video_capture.release()
+        cv2.destroyAllWindows()
+        print("Cleaned up resources")
 
-    while True:
-        frame, recognized_names, emotions = process_frame()
+    try:
+        speech_thread = threading.Thread(target=recognize_speech)
+        greeting_thread = threading.Thread(target=handle_greeting)
+        speech_thread.daemon = True
+        greeting_thread.daemon = True
+        speech_thread.start()
+        greeting_thread.start()
 
-        if frame is not None:
-            cv2.imshow("Recognize Faces - Press 'q' to quit", frame)
+        while True:
+            frame, recognized_names, emotions = process_frame()
 
-        if not capture_queue.empty():
-            command = capture_queue.get()
-            if command == "start_capture":
-                person_name = get_person_name()
-                if person_name:
-                    capture_images(person_name)
+            if frame is not None:
+                cv2.imshow("Recognize Faces - Press 'q' to quit", frame)
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+            if not capture_queue.empty():
+                command = capture_queue.get()
+                if command == "start_capture":
+                    person_name = get_person_name()
+                    if person_name:
+                        capture_images(person_name)
 
-    video_capture.release()
-    cv2.destroyAllWindows()
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+    finally:
+        cleanup()
 
 if __name__ == "__main__":
     recognize_faces()
