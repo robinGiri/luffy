@@ -1,4 +1,4 @@
-model_name: "EleutherAI/gpt-neo-125M"
+model_name: "luffyAI/ChildModel-02"
 max_length: 50
 top_k: 50
 top_p: 0.95
