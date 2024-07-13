@@ -9,6 +9,7 @@ import numpy as np
 import noisereduce as nr
 import speech_recognition as sr
 import pyttsx3
+from moderation import contains_forbidden_words
 
 mp.set_start_method('spawn', force=True)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -89,12 +90,15 @@ if __name__ == "__main__":
                 if input_text.lower() == 'exit':
                     break
                 if input_text:
-                    output_text = generate_text(input_text)
+                    if contains_forbidden_words(input_text):
+                        output_text = "Can't generate a response due to inappropriate content."
+                    else:
+                        output_text = generate_text(input_text)
+
                     print(output_text)
-                    
                     speak_text(output_text)
-                    
                     log_memory_usage()
+                    
             except Exception as e:
                 logging.error(f"An error occurred in the main loop: {e}")
                 logging.error(traceback.format_exc())
