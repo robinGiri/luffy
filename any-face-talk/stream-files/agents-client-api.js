@@ -210,7 +210,7 @@ function playIdleVideo() {
   videoElement.classList.toggle("animated")
 
   videoElement.srcObject = undefined;
-  videoElement.src = 'emma_idle.mp4';
+  videoElement.src = 'abhisek.mp4';
   videoElement.loop = true;
 
   // Remove Animation Class after it's completed
@@ -374,10 +374,39 @@ destroyButton.onclick = async () => {
   closePC();
 };
 
+const loadingAnimation = `
+  <style>
+    .loader {
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid orange;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      position: absolute;
+      right: -2rem;
+      top: -1rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .label-container {
+      position: relative;
+      display: inline-block;
+    }
+  </style>
+  <div class="label-container">
+    <span class="loader"></span>
+  </div>
+`;
 // Agents API Workflow
 async function agentsAPIworkflow() {
-  agentIdLabel.innerHTML = `<span style='color:orange'>Processing...<style='color:orange'>`
-  chatIdLabel.innerHTML = `<span style='color:orange'>Processing...<style='color:orange'>`
+  document.getElementById('agentId-label').innerHTML = loadingAnimation;
+  document.getElementById('chatId-label').innerHTML = loadingAnimation;
   axios.defaults.baseURL = `${DID_API.url}`;
   axios.defaults.headers.common['Authorization'] = `Basic ${DID_API.key}`
   axios.defaults.headers.common['content-type'] = 'application/json'
@@ -448,6 +477,7 @@ async function agentsAPIworkflow() {
 
   // Agents Overview - Step 1: Create an Agent
   // https://docs.d-id.com/reference/agents-overview#%EF%B8%8F-step-1-create-an-agent
+  const selectedVoice = localStorage.getItem('selectedVoice') || 'en-US-DavisNeural';
   const createAgent = await axios.post('/agents',
     {
       "knowledge": {
@@ -462,7 +492,7 @@ async function agentsAPIworkflow() {
         "type": "talk",
         "voice": {
           "type": "microsoft",
-          "voice_id": "en-US-DavisNeural"
+          "voice_id": selectedVoice
         },
         "thumbnail": "https://create-images-results.d-id.com/google-oauth2%7C106740533438212685666/upl_r2vrpVkzyOEZU7eK2-M1u/image.jpeg",
         "source_url": "https://create-images-results.d-id.com/google-oauth2%7C106740533438212685666/upl_r2vrpVkzyOEZU7eK2-M1u/image.jpeg"

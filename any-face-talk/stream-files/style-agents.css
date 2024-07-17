@@ -22,7 +22,7 @@ body {
 }
 
 #content {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
 }
 
@@ -30,17 +30,14 @@ body {
   background-color: #fff;
   padding: 20px;
   margin-bottom: 20px;
-  border: 1px solid #000; 
+  border: 1px solid #000;
   border-radius: 8px;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
 }
 
 .status h4 {
-  margin-bottom: 10px;
-}
-
-.status div {
   margin-bottom: 10px;
 }
 
@@ -51,6 +48,7 @@ body {
 #buttons {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 1rem;
 }
 
@@ -58,7 +56,7 @@ body {
   flex: 1;
   padding: 10px 20px;
   background-color: #000;
-  color: #fff; 
+  color: #fff;
   border: none;
   cursor: pointer;
   border-radius: 4px;
@@ -75,7 +73,7 @@ body {
   gap: 20px;
 }
 
-#msgHistory{
+#msgHistory {
   font-size: x-small;
   height: 50vh;
 }
@@ -83,17 +81,26 @@ body {
 .video-wrapper {
   flex: 1 1 300px;
   max-width: 100%;
-  border: 1px solid #000; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #000;
   border-radius: 8px;
   overflow: hidden;
 }
 
 .video-wrapper video {
   width: 100%;
-  height: 55vh; 
+  height: 55vh;
   display: block;
+  border-radius: 3%;
 }
 
+.video-div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
 .chat {
   flex: 1 1 300px;
@@ -113,7 +120,7 @@ textarea {
   box-sizing: border-box;
   padding: 10px;
   margin-bottom: 10px;
-  border: 1px solid #000; 
+  border: 1px solid #000;
   border-radius: 4px;
 }
 

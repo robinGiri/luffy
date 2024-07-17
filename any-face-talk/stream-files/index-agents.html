@@ -1,22 +1,26 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>All Face Talk</title>
+    <title>New Era | Any Face Talk</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style-agents.css" />
-    <link rel="icon" type="image/png" sizes="192x192" href="https://studio.d-id.com/favicon/favicon-192x192.png" />
+    <link rel="icon" type="image/png" href="Icon.png" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   </head>
 
-  <body class="
-  ">
+  <body>
     <div id="content">
       <div id="status" class="status">
         <div>
           <h4>Agent Status</h4>
-          Agent ID: <label id="agentId-label"></label><br />
-          Chat ID: <label id="chatId-label"></label><br />
+          <div>
+            <p>Agent ID: <label id="agentId-label"></label></p>
+            <p>Chat ID: <label id="chatId-label"></label></p>
+          </div>
           <br />
         </div>
         <div>
@@ -32,12 +36,32 @@
           <button id="agents-button" type="button">Create</button>
           <button id="connect-button" type="button">Connect</button>
           <button id="destroy-button" type="button">Destroy</button>
+
+          <div class="dropdown">
+            <button
+              class="btn btn-secondary dropdown-toggle"
+              type="button"
+              id="dropdownMenuButton"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              Neutral M-Davis
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+              <li><a class="dropdown-item" href="#" data-value="en-US-DavisNeural">M-Davis-US</a></li>
+              <li><a class="dropdown-item" href="#" data-value="zh-CN-YunxiaNeural">CM-Yunxia-CN</a></li>
+              <li><a class="dropdown-item" href="#" data-value="en-AU-NatashaNeural">F-Natasha-AU</a></li>
+              <li><a class="dropdown-item" href="#" data-value="zh-CN-XiaoxiaoNeural">F-Xiaoxiao-CN-Lyrical</a></li>
+              <li><a class="dropdown-item" href="#" data-value="en-US-JennyNeural">F-Jenny-US-Angry</a></li>
+              <li><a class="dropdown-item" href="#" data-value="en-GB-MaisieNeural">CF-Maisie-GB</a></li>
+            </ul>
+          </div>
         </div>
       </div>
 
       <div class="second-div">
         <div id="video-wrapper" class="video-wrapper">
-          <div>
+          <div class="video-div">
             <video id="video-element" width="300" height="700" src="" autoplay loop muted class="animated"></video>
           </div>
         </div>
@@ -54,10 +78,37 @@
           <button id="start-button" type="button">Send</button>
         </div>
       </div>
-
     </div>
 
     <script type="module" src="./agents-client-api.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const dropdownMenu = document.querySelector('.dropdown-menu');
+        const dropdownButton = document.getElementById('dropdownMenuButton');
+        const createButton = document.getElementById('agents-button');
+        const storedVoice = localStorage.getItem('selectedVoice');
+        if (storedVoice) {
+          dropdownButton.textContent = storedVoice;
+        }
+        dropdownMenu.addEventListener('click', function (event) {
+          const target = event.target.closest('.dropdown-item');
+          if (!target) return;
+          const selectedVoiceText = target.textContent;
+          const selectedVoiceValue = target.getAttribute('data-value');
+          dropdownButton.textContent = selectedVoiceText;
+          localStorage.setItem('selectedVoice', selectedVoiceValue);
+          createButton.click();
+        });
+
+        createButton.addEventListener('click', function () {
+          console.log('Creating agent...');
+          setTimeout(function () {
+            console.log('Agent created successfully.');
+          }, 1000);
+        });
+      });
+    </script>
   </body>
 </html>
