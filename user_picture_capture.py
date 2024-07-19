@@ -61,7 +61,7 @@ def recognize_speech_from_mic():
         logging.error(f"Could not request results from Google Speech Recognition service; {e}")
     return ""
 
-def capture_images(person_name, num_images=30, directory="training_data"):
+def capture_images(person_name, num_images=50, directory="training_data"):
     if not os.path.exists(directory):
         os.makedirs(directory)
     
