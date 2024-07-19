@@ -61,7 +61,7 @@ def recognize_speech_from_mic():
         logging.error(f"Could not request results from Google Speech Recognition service; {e}")
     return ""
 
-def capture_images(person_name, num_images=50, directory="training_data"):
+def capture_images(person_name, num_images=30, directory="training_data"):
     if not os.path.exists(directory):
         os.makedirs(directory)
     
@@ -91,6 +91,9 @@ def speak_text(text):
     engine = pyttsx3.init()
     engine.say(text)
     engine.runAndWait()
+    
+def check_for_termination(audio_text):
+    return "thank you" in audio_text.lower()
 
 if __name__ == "__main__":
     try:
@@ -103,6 +106,11 @@ if __name__ == "__main__":
                 logging.info("Starting speech recognition")
                 recognized_text = recognize_speech_from_file(audio_filename)
                 logging.info(f"Speech recognized: {recognized_text}")
+                
+                if check_for_termination(recognized_text):
+                    speak_text("Have a nice day!")
+                    logging.info("Terminating program on user's request.")
+                    break
                 
                 if "recognize" in recognized_text or "me" in recognized_text:
                     logging.info("Keywords detected, initiating image capture")
