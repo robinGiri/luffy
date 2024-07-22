@@ -284,7 +284,7 @@ connectButton.onclick = async () => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      source_url: 'https://create-images-results.d-id.com/google-oauth2%7C106740533438212685666/upl_r2vrpVkzyOEZU7eK2-M1u/image.jpeg'
+      source_url: 'https://i.pinimg.com/736x/d9/8f/dc/d98fdc5bada980bf42ab284d98ece448.jpg'
     }),
   });
 
@@ -477,7 +477,7 @@ async function agentsAPIworkflow() {
 
   // Agents Overview - Step 1: Create an Agent
   // https://docs.d-id.com/reference/agents-overview#%EF%B8%8F-step-1-create-an-agent
-  const selectedVoice = localStorage.getItem('selectedVoice') || 'en-US-DavisNeural';
+  const selectedVoice = localStorage.getItem('selectedVoice') || 'en-GB-MaisieNeural';
   const createAgent = await axios.post('/agents',
     {
       "knowledge": {
@@ -494,8 +494,8 @@ async function agentsAPIworkflow() {
           "type": "microsoft",
           "voice_id": selectedVoice
         },
-        "thumbnail": "https://create-images-results.d-id.com/google-oauth2%7C106740533438212685666/upl_r2vrpVkzyOEZU7eK2-M1u/image.jpeg",
-        "source_url": "https://create-images-results.d-id.com/google-oauth2%7C106740533438212685666/upl_r2vrpVkzyOEZU7eK2-M1u/image.jpeg"
+        "thumbnail": "https://i.pinimg.com/736x/d9/8f/dc/d98fdc5bada980bf42ab284d98ece448.jpg",
+        "source_url": "https://i.pinimg.com/736x/d9/8f/dc/d98fdc5bada980bf42ab284d98ece448.jpg"
       },
       "llm": {
         "type": "openai",
