@@ -14,7 +14,7 @@
 
   <body class="custom-scroll">
     <div id="content">
-      <div id="status" class="status">
+      <div id="status" class="status d-none">
         <div>
           <h4>Agent Status</h4>
           <div>
@@ -33,11 +33,10 @@
           <br />
         </div>
         <div id="buttons">
-          <button id="agents-button" type="button">Create</button>
-          <button id="connect-button" type="button">Connect</button>
-          <button id="destroy-button" type="button">Destroy</button>
+          <button id="connect-button" class="d-none" type="button">Connect</button>
+          <button id="destroy-button" class="d-none" type="button">Destroy</button>
 
-          <div class="dropdown">
+          <div class="dropdown d-none">
             <button
               class="btn btn-secondary dropdown-toggle"
               type="button"
@@ -72,11 +71,10 @@
           </div>
         </div>
         <div>
-          <h3>Type your message here:</h3>
+          <button id="agents-button" class="mb-2" type="button">Trun On</button>
           <textarea id="textArea" cols="50" rows="5" maxlength="280"></textarea>
           <br />
-          <button id="start-button" type="button" style="display: none;">Send</button>
-          <button id="record-button" type="button">Start Recording</button>
+          <button id="start-button" class="d-none" type="button">Start</button>
         </div>
       </div>
     </div>
@@ -89,6 +87,8 @@
         const dropdownMenu = document.querySelector('.dropdown-menu');
         const dropdownButton = document.getElementById('dropdownMenuButton');
         const createButton = document.getElementById('agents-button');
+        const connectButton = document.getElementById('connect-button');
+        const startButton = document.getElementById('start-button');
         const storedVoice = localStorage.getItem('selectedVoice');
         if (storedVoice) {
           dropdownButton.textContent = storedVoice;
@@ -107,12 +107,11 @@
           console.log('Creating agent...');
           setTimeout(function () {
             console.log('Agent created successfully.');
+            connectButton.click();
           }, 1000);
         });
 
-        const recordButton = document.getElementById('record-button');
         const textArea = document.getElementById('textArea');
-        const startButton = document.getElementById('start-button');
         let timer;
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -122,26 +121,25 @@
         }
         const recognition = new SpeechRecognition();
 
-        recognition.continuous = false;
+        recognition.continuous = true;
         recognition.interimResults = false;
         recognition.lang = 'en-US';
 
-        recordButton.addEventListener('click', function () {
-          recognition.start();
+        recognition.start();
+
+        recognition.onstart = function () {
           console.log('Speech recognition started');
-        });
+        };
 
         recognition.onresult = function (event) {
           const transcript = event.results[0][0].transcript;
           textArea.value = transcript;
           console.log('Speech recognition result: ', transcript);
 
-          // Clear the previous timer
           if (timer) {
             clearTimeout(timer);
           }
 
-          // Set a new 3-second timer
           timer = setTimeout(() => {
             if (textArea.value.trim()) {
               console.log('Simulating button click after 3 seconds of inactivity.');
@@ -158,17 +156,8 @@
         };
 
         recognition.onend = function () {
-          console.log('Speech recognition service disconnected');
-          if (timer) {
-            clearTimeout(timer);
-          }
-          // Set a new 3-second timer
-          timer = setTimeout(() => {
-            if (textArea.value.trim()) {
-              console.log('Simulating button click after 3 seconds of inactivity.');
-              startButton.click();
-            }
-          }, 1500);
+          console.log('Speech recognition service disconnected. Restarting...');
+          recognition.start();
         };
       });
     </script>

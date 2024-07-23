@@ -264,57 +264,6 @@ async function fetchWithRetries(url, options, retries = 1) {
   }
 }
 
-const connectButton = document.getElementById('connect-button');
-connectButton.onclick = async () => {
-  if (agentId == "" || agentId === undefined) {
-    return alert("1. Click on the 'Create new Agent with Knowledge' button\n2. Open the Console and wait for the process to complete\n3. Press on the 'Connect' button\n4. Type and send a message to the chat\nNOTE: You can store the created 'agentID' and 'chatId' variables at the bottom of the JS file for future chats")
-  }
-
-  if (peerConnection && peerConnection.connectionState === 'connected') {
-    return;
-  }
-  stopAllStreams();
-  closePC();
-
-  // WEBRTC API CALL 1 - Create a new stream
-  const sessionResponse = await fetchWithRetries(`${DID_API.url}/${DID_API.service}/streams`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${DID_API.key}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      source_url: 'https://i.pinimg.com/736x/d9/8f/dc/d98fdc5bada980bf42ab284d98ece448.jpg'
-    }),
-  });
-
-
-  const { id: newStreamId, offer, ice_servers: iceServers, session_id: newSessionId } = await sessionResponse.json();
-  streamId = newStreamId;
-  sessionId = newSessionId;
-  try {
-    sessionClientAnswer = await createPeerConnection(offer, iceServers);
-  } catch (e) {
-    console.log('error during streaming setup', e);
-    stopAllStreams();
-    closePC();
-    return;
-  }
-
-  // WEBRTC API CALL 2 - Start a stream
-  const sdpResponse = await fetch(`${DID_API.url}/${DID_API.service}/streams/${streamId}/sdp`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${DID_API.key}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      answer: sessionClientAnswer,
-      session_id: sessionId,
-    }),
-  });
-};
-
 const startButton = document.getElementById('start-button');
 startButton.onclick = async () => {
   // connectionState not supported in firefox
@@ -529,21 +478,99 @@ async function agentsAPIworkflow() {
 
 }
 
-const agentsButton = document.getElementById("agents-button")
+const agentsButton = document.getElementById("agents-button");
+const connectButton = document.getElementById('connect-button');
+let reconnectInterval;
+
 agentsButton.onclick = async () => {
-  try{
-    const agentsIds = {} = await agentsAPIworkflow()
-    console.log(agentsIds)
-    agentId = agentsIds.agentId
-    chatId = agentsIds.chatId
-    return
+  try {
+    const agentsIds = await agentsAPIworkflow();
+    console.log(agentsIds);
+    agentId = agentsIds.agentId;
+    chatId = agentsIds.chatId;
+
+    // Automatically trigger reconnect after getting the response
+    await reconnect();
+
+    return;
+  } catch (err) {
+    agentIdLabel.innerHTML = `<span style='color:red'>Failed</span>`;
+    chatIdLabel.innerHTML = `<span style='color:red'>Failed</span>`;
+    console.error(err); // Use console.error for errors
+    throw new Error(err);
   }
-  catch(err){
-    agentIdLabel.innerHTML = `<span style='color:red'>Failed</span>`
-    chatIdLabel.innerHTML = `<span style='color:red'>Failed</span>`
-    throw new Error(err)
+};
+
+const reconnect = async () => {
+  if (agentId === "" || agentId === undefined) {
+    alert("1. Click on the 'Create new Agent with Knowledge' button\n2. Open the Console and wait for the process to complete\n3. Press on the 'Connect' button\n4. Type and send a message to the chat\nNOTE: You can store the created 'agentID' and 'chatId' variables at the bottom of the JS file for future chats");
+    return;
   }
-}
+
+  if (peerConnection && peerConnection.connectionState === 'connected') {
+    console.log('Already connected.');
+    return;
+  }
+  
+  stopAllStreams();
+  closePC();
+
+  try {
+    // WEBRTC API CALL 1 - Create a new stream
+    const sessionResponse = await fetchWithRetries(`${DID_API.url}/${DID_API.service}/streams`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${DID_API.key}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        source_url: 'https://i.pinimg.com/736x/d9/8f/dc/d98fdc5bada980bf42ab284d98ece448.jpg'
+      }),
+    });
+
+    const { id: newStreamId, offer, ice_servers: iceServers, session_id: newSessionId } = await sessionResponse.json();
+    streamId = newStreamId;
+    sessionId = newSessionId;
+
+    sessionClientAnswer = await createPeerConnection(offer, iceServers);
+
+    // WEBRTC API CALL 2 - Start a stream
+    await fetch(`${DID_API.url}/${DID_API.service}/streams/${streamId}/sdp`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${DID_API.key}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        answer: sessionClientAnswer,
+        session_id: sessionId,
+      }),
+    });
+    console.log('Successfully reconnected.');
+  } catch (e) {
+    console.log('Error during streaming setup', e);
+    stopAllStreams();
+    closePC();
+  }
+};
+
+connectButton.onclick = () => {
+  reconnect();
+  if (reconnectInterval) {
+    clearInterval(reconnectInterval);
+  }
+  reconnectInterval = setInterval(() => {
+    console.log('Reconnecting in 2 minutes...');
+    reconnect();
+  }, 120000);
+};
+
+window.addEventListener('beforeunload', () => {
+  if (reconnectInterval) {
+    clearInterval(reconnectInterval);
+  }
+});
+
 
 // Paste Your Created Agent and Chat IDs Here:
 agentId = ""

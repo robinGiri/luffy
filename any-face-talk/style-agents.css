@@ -6,7 +6,7 @@
 }
 
 body {
-  height: 130vh;
+  height: 100vh;
   font-family: 'Mulish', sans-serif;
   line-height: 1.6;
   background-color: #fff;
@@ -64,7 +64,6 @@ body::-webkit-scrollbar {
 }
 
 .second-div {
-  height: 95vh;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
