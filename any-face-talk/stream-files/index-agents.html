@@ -75,7 +75,8 @@
           <h3>Type your message here:</h3>
           <textarea id="textArea" cols="50" rows="5" maxlength="280"></textarea>
           <br />
-          <button id="start-button" type="button">Send</button>
+          <button id="start-button" type="button" style="display: none;">Send</button>
+          <button id="record-button" type="button">Start Recording</button>
         </div>
       </div>
     </div>
@@ -108,6 +109,67 @@
             console.log('Agent created successfully.');
           }, 1000);
         });
+
+        const recordButton = document.getElementById('record-button');
+        const textArea = document.getElementById('textArea');
+        const startButton = document.getElementById('start-button');
+        let timer;
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          console.error('Web Speech API is not supported in this browser.');
+          return;
+        }
+        const recognition = new SpeechRecognition();
+
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recordButton.addEventListener('click', function () {
+          recognition.start();
+          console.log('Speech recognition started');
+        });
+
+        recognition.onresult = function (event) {
+          const transcript = event.results[0][0].transcript;
+          textArea.value = transcript;
+          console.log('Speech recognition result: ', transcript);
+
+          // Clear the previous timer
+          if (timer) {
+            clearTimeout(timer);
+          }
+
+          // Set a new 3-second timer
+          timer = setTimeout(() => {
+            if (textArea.value.trim()) {
+              console.log('Simulating button click after 3 seconds of inactivity.');
+              startButton.click();
+            }
+          }, 1500);
+        };
+
+        recognition.onerror = function (event) {
+          console.error('Speech recognition error detected: ' + event.error);
+          if (event.error === 'network') {
+            console.error('There is a network error. Please check your internet connection.');
+          }
+        };
+
+        recognition.onend = function () {
+          console.log('Speech recognition service disconnected');
+          if (timer) {
+            clearTimeout(timer);
+          }
+          // Set a new 3-second timer
+          timer = setTimeout(() => {
+            if (textArea.value.trim()) {
+              console.log('Simulating button click after 3 seconds of inactivity.');
+              startButton.click();
+            }
+          }, 1500);
+        };
       });
     </script>
   </body>

@@ -10,11 +10,13 @@ import noisereduce as nr
 import speech_recognition as sr
 import pyttsx3
 from moderation import contains_forbidden_words
+from flask import Flask, request, jsonify
 
 mp.set_start_method('spawn', force=True)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 engine = pyttsx3.init()
+app = Flask(__name__)
 
 def log_memory_usage():
     process = psutil.Process()
@@ -74,36 +76,31 @@ def speak_text(text):
     engine.say(text)
     engine.runAndWait()
 
-if __name__ == "__main__":
+@app.route('/process_input', methods=['POST'])
+def process_input():
     try:
-        log_memory_usage() 
-        while True:
-            try:
-                audio_filename = "input.wav"
-                noise_reduced_filename = "input_reduced.wav"
-                record_audio(audio_filename)
-                reduce_noise(audio_filename, noise_reduced_filename)
-                input_text = recognize_speech_from_file(noise_reduced_filename)
-                
-                print(f"Recognized text: {input_text}")
-                
-                if input_text.lower() == 'exit':
-                    break
-                if input_text:
-                    if contains_forbidden_words(input_text):
-                        output_text = "Can't generate a response due to inappropriate content."
-                    else:
-                        output_text = generate_text(input_text)
+        data = request.get_json()
+        input_text = data.get('input_text', '')
+        
+        if input_text.lower() == 'exit':
+            return jsonify({"message": "Exiting"}), 200
+        
+        if input_text:
+            if contains_forbidden_words(input_text):
+                output_text = "Can't generate a response due to inappropriate content."
+            else:
+                output_text = generate_text(input_text)
 
-                    print(output_text)
-                    speak_text(output_text)
-                    log_memory_usage()
-                    
-            except Exception as e:
-                logging.error(f"An error occurred in the main loop: {e}")
-                logging.error(traceback.format_exc())
-    except KeyboardInterrupt:
-        logging.info("Program terminated by user.")
+            speak_text(output_text)
+            log_memory_usage()
+            return jsonify({"output_text": output_text}), 200
+        else:
+            return jsonify({"message": "No input text provided"}), 400
+
     except Exception as e:
         logging.error(f"An error occurred: {e}")
         logging.error(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000)
