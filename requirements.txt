@@ -3,7 +3,6 @@ opencv-python-headless
 dlib
 face_recognition
 SpeechRecognition
-pyttsx3
 scipy
 transformers
 deepface
