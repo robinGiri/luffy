@@ -2,10 +2,10 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 
-const port = 1234;
+const port = 3000;
 
 const app = express();
-app.use(cors({ origin: 'http://localhost:1234' }));
+app.use(cors({ origin: 'http://localhost:3000' }));
 
 app.use('/', express.static(__dirname));
 
