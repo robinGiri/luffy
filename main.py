@@ -8,7 +8,6 @@ import wave
 import numpy as np
 import noisereduce as nr
 import speech_recognition as sr
-import pyttsx3
 from moderation import contains_forbidden_words
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -16,7 +15,6 @@ from flask_cors import CORS
 mp.set_start_method('spawn', force=True)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-engine = pyttsx3.init()
 app = Flask(__name__)
 CORS(app)
 
@@ -74,9 +72,6 @@ def recognize_speech_from_file(file):
         logging.error(f"Could not request results from Google Speech Recognition service; {e}")
     return ""
 
-def speak_text(text):
-    engine.say(text)
-    engine.runAndWait()
 
 @app.route('/process_input', methods=['POST'])
 def process_input():
@@ -93,7 +88,6 @@ def process_input():
             else:
                 output_text = generate_text(input_text)
 
-            speak_text(output_text)
             log_memory_usage()
             return jsonify({"output_text": output_text}), 200
         else:
