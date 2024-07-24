@@ -11,12 +11,14 @@ import speech_recognition as sr
 import pyttsx3
 from moderation import contains_forbidden_words
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 mp.set_start_method('spawn', force=True)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 engine = pyttsx3.init()
 app = Flask(__name__)
+CORS(app)
 
 def log_memory_usage():
     process = psutil.Process()
@@ -103,4 +105,4 @@ def process_input():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5001)

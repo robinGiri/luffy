@@ -264,49 +264,83 @@ async function fetchWithRetries(url, options, retries = 1) {
   }
 }
 
+// const startButton = document.getElementById('start-button');
+// console.log('startButton', startButton);
+// startButton.onclick = async () => {
+//   // connectionState not supported in firefox
+//   if (peerConnection?.signalingState === 'stable' || peerConnection?.iceConnectionState === 'connected') {
+
+//     // Pasting the user's message to the Chat History element
+//     document.getElementById("msgHistory").innerHTML += `<span style='opacity:0.5'><u>User:</u> ${textArea.value}</span><br>`
+
+//     // Storing the Text Area value
+//     let txtAreaValue = document.getElementById("textArea").value
+
+//     // Clearing the text-box element
+//     document.getElementById("textArea").value = ""
+
+
+//     // Agents Overview - Step 3: Send a Message to a Chat session - Send a message to a Chat
+//     const playResponse = await fetchWithRetries(`${DID_API.url}/agents/${agentId}/chat/${chatId}`, {
+//       method: 'POST',
+//       headers: {
+//         'Authorization': `Basic ${DID_API.key}`,
+//         'Content-Type': 'application/json',
+//       },
+//       body: JSON.stringify({
+//         "streamId": streamId,
+//         "sessionId": sessionId,
+//         "messages": [
+//           {
+//             "role": "user",
+//             "content": txtAreaValue,
+//             "created_at": new Date().toString()
+//           }
+//         ]
+//       }),
+//     });
+//     const playResponseData = await playResponse.json();
+//     if (playResponse.status === 200 && playResponseData.chatMode === 'TextOnly') {
+//       console.log('User is out of credit, API only return text messages');
+//       document.getElementById(
+//         'msgHistory'
+//       ).innerHTML += `<span style='opacity:0.5'> ${playResponseData.result}</span><br>`;
+//     }
+//   }
+// };
+
 const startButton = document.getElementById('start-button');
 startButton.onclick = async () => {
   // connectionState not supported in firefox
   if (peerConnection?.signalingState === 'stable' || peerConnection?.iceConnectionState === 'connected') {
 
     // Pasting the user's message to the Chat History element
-    document.getElementById("msgHistory").innerHTML += `<span style='opacity:0.5'><u>User:</u> ${textArea.value}</span><br>`
+    msgHistory.innerHTML += `<span style='opacity:0.5'><u>User:</u> ${textArea.value}</span><br>`
 
     // Storing the Text Area value
-    let txtAreaValue = document.getElementById("textArea").value
+    let txtAreaValue = textArea.value;
 
     // Clearing the text-box element
-    document.getElementById("textArea").value = ""
+    textArea.value = ""
 
-
-    // Agents Overview - Step 3: Send a Message to a Chat session - Send a message to a Chat
-    const playResponse = await fetchWithRetries(`${DID_API.url}/agents/${agentId}/chat/${chatId}`, {
+    // Send message to backend server
+    const response = await fetch('http://localhost:5001/process_input', {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${DID_API.key}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        "streamId": streamId,
-        "sessionId": sessionId,
-        "messages": [
-          {
-            "role": "user",
-            "content": txtAreaValue,
-            "created_at": new Date().toString()
-          }
-        ]
-      }),
+      body: JSON.stringify({ input_text: txtAreaValue }),
     });
-    const playResponseData = await playResponse.json();
-    if (playResponse.status === 200 && playResponseData.chatMode === 'TextOnly') {
-      console.log('User is out of credit, API only return text messages');
-      document.getElementById(
-        'msgHistory'
-      ).innerHTML += `<span style='opacity:0.5'> ${playResponseData.result}</span><br>`;
+
+    const responseData = await response.json();
+    if (response.status === 200) {
+      msgHistory.innerHTML += `<span>${responseData.output_text}</span><br><br>`;
+    } else {
+      console.log('Error:', responseData);
     }
   }
 };
+
 
 const destroyButton = document.getElementById('destroy-button');
 destroyButton.onclick = async () => {
