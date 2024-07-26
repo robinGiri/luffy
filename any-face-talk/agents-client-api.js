@@ -127,6 +127,7 @@ function onIceConnectionStateChange() {
   if (peerConnection.iceConnectionState === 'failed' || peerConnection.iceConnectionState === 'closed') {
     stopAllStreams();
     closePC();
+    reconnect();
   }
 }
 function onConnectionStateChange() {
@@ -168,7 +169,7 @@ function onTrack(event) {
   statsIntervalId = setInterval(async () => {
     const stats = await peerConnection.getStats(event.track);
     stats.forEach((report) => {
-     if (report.type === 'inbound-rtp' && report.kind === 'video') {
+      if (report.type === 'inbound-rtp' && report.kind === 'video') {
 
         const videoStatusChanged = videoIsPlaying !== report.bytesReceived > lastBytesReceived;
 
@@ -264,82 +265,82 @@ async function fetchWithRetries(url, options, retries = 1) {
   }
 }
 
-// const startButton = document.getElementById('start-button');
-// console.log('startButton', startButton);
-// startButton.onclick = async () => {
-//   // connectionState not supported in firefox
-//   if (peerConnection?.signalingState === 'stable' || peerConnection?.iceConnectionState === 'connected') {
-
-//     // Pasting the user's message to the Chat History element
-//     document.getElementById("msgHistory").innerHTML += `<span style='opacity:0.5'><u>User:</u> ${textArea.value}</span><br>`
-
-//     // Storing the Text Area value
-//     let txtAreaValue = document.getElementById("textArea").value
-
-//     // Clearing the text-box element
-//     document.getElementById("textArea").value = ""
-
-
-//     // Agents Overview - Step 3: Send a Message to a Chat session - Send a message to a Chat
-//     const playResponse = await fetchWithRetries(`${DID_API.url}/agents/${agentId}/chat/${chatId}`, {
-//       method: 'POST',
-//       headers: {
-//         'Authorization': `Basic ${DID_API.key}`,
-//         'Content-Type': 'application/json',
-//       },
-//       body: JSON.stringify({
-//         "streamId": streamId,
-//         "sessionId": sessionId,
-//         "messages": [
-//           {
-//             "role": "user",
-//             "content": txtAreaValue,
-//             "created_at": new Date().toString()
-//           }
-//         ]
-//       }),
-//     });
-//     const playResponseData = await playResponse.json();
-//     if (playResponse.status === 200 && playResponseData.chatMode === 'TextOnly') {
-//       console.log('User is out of credit, API only return text messages');
-//       document.getElementById(
-//         'msgHistory'
-//       ).innerHTML += `<span style='opacity:0.5'> ${playResponseData.result}</span><br>`;
-//     }
-//   }
-// };
-
 const startButton = document.getElementById('start-button');
+console.log('startButton', startButton);
 startButton.onclick = async () => {
   // connectionState not supported in firefox
   if (peerConnection?.signalingState === 'stable' || peerConnection?.iceConnectionState === 'connected') {
 
     // Pasting the user's message to the Chat History element
-    msgHistory.innerHTML += `<span style='opacity:0.5'><u>User:</u> ${textArea.value}</span><br>`
+    document.getElementById("msgHistory").innerHTML += `<span style='opacity:0.5'><u>User:</u> ${textArea.value}</span><br>`
 
     // Storing the Text Area value
-    let txtAreaValue = textArea.value;
+    let txtAreaValue = document.getElementById("textArea").value
 
     // Clearing the text-box element
-    textArea.value = ""
+    document.getElementById("textArea").value = ""
 
-    // Send message to backend server
-    const response = await fetch('http://localhost:5001/process_input', {
+
+    // Agents Overview - Step 3: Send a Message to a Chat session - Send a message to a Chat
+    const playResponse = await fetchWithRetries(`${DID_API.url}/agents/${agentId}/chat/${chatId}`, {
       method: 'POST',
       headers: {
+        'Authorization': `Basic ${DID_API.key}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ input_text: txtAreaValue }),
+      body: JSON.stringify({
+        "streamId": streamId,
+        "sessionId": sessionId,
+        "messages": [
+          {
+            "role": "user",
+            "content": txtAreaValue,
+            "created_at": new Date().toString()
+          }
+        ]
+      }),
     });
-
-    const responseData = await response.json();
-    if (response.status === 200) {
-      msgHistory.innerHTML += `<span>${responseData.output_text}</span><br><br>`;
-    } else {
-      console.log('Error:', responseData);
+    const playResponseData = await playResponse.json();
+    if (playResponse.status === 200 && playResponseData.chatMode === 'TextOnly') {
+      console.log('User is out of credit, API only return text messages');
+      document.getElementById(
+        'msgHistory'
+      ).innerHTML += `<span style='opacity:0.5'> ${playResponseData.result}</span><br>`;
     }
   }
 };
+
+// const startButton = document.getElementById('start-button');
+// startButton.onclick = async () => {
+//   // connectionState not supported in firefox
+//   if (peerConnection?.signalingState === 'stable' || peerConnection?.iceConnectionState === 'connected') {
+
+//     // Pasting the user's message to the Chat History element
+//     msgHistory.innerHTML += `<span style='opacity:0.5'><u>User:</u> ${textArea.value}</span><br>`
+
+//     // Storing the Text Area value
+//     let txtAreaValue = textArea.value;
+
+//     // Clearing the text-box element
+//     textArea.value = ""
+
+//     // Send message to backend server
+//     const response = await fetch('http://localhost:5001/process_input', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//       body: JSON.stringify({ input_text: txtAreaValue }),
+//     });
+
+//     const responseData = await response.json();
+//     if (response.status === 200) {
+//       msgHistory.innerHTML += `<span>${responseData.output_text}</span><br><br>`;
+//     } else {
+//       console.log('Error:', responseData);
+//     }
+//   }
+// };
 
 
 const destroyButton = document.getElementById('destroy-button');
@@ -397,7 +398,7 @@ async function agentsAPIworkflow() {
   // Retry Mechanism (Polling) for this demo only - Please use Webhooks in real life applications! 
   // as described in https://docs.d-id.com/reference/knowledge-overview#%EF%B8%8F-step-2-add-documents-to-the-knowledge-base
   async function retry(url, retries = 1) {
-    const maxRetryCount = 5; // Maximum number of retries
+    const maxRetryCount = 25; // Maximum number of retries
     const maxDelaySec = 10; // Maximum delay in seconds
     try {
       let response = await axios.get(`${url}`)
@@ -441,8 +442,8 @@ async function agentsAPIworkflow() {
   const createDocument = await axios.post(`/knowledge/${knowledgeId}/documents`,
     {
       "documentType": "pdf",
-      "source_url": "https://d-id-public-bucket.s3.us-west-2.amazonaws.com/Prompt_engineering_Wikipedia.pdf",
-      "title": "Prompt Engineering Wikipedia Page PDF",
+      "source_url": "https://drive.google.com/uc?export=download&id=1e4zkEyFOgQ3G4Aoj3uAxBcjaKnTpVfl_",
+      "title": "Child stories",
     })
   console.log("Create Document: ", createDocument.data)
 
@@ -484,9 +485,9 @@ async function agentsAPIworkflow() {
         "type": "openai",
         "provider": "openai",
         "model": "gpt-3.5-turbo-1106",
-        "instructions": "Your name is Abhisek, an AI designed to assist with information about Prompt Engineering and RAG"
+        "instructions": "Your name is Story sage, an AI designed to tell a child stories."
       },
-      "preview_name": "I am Abhisek Magar, the supreme deity of destruction, dominating all existence with my indomitable power! With but a gesture, I shatter stars and reshape galaxies at my whim. Behold my might, for I am the architect of cosmic upheaval, the harbinger of inevitable annihilation! None can challenge my sovereignty over the infinite realms, where my command echoes through the very fabric of reality itself!"
+      "preview_name": "I am a Story Sage, or you can call me S S"
     }
 
   )
@@ -523,15 +524,93 @@ agentsButton.onclick = async () => {
     agentId = agentsIds.agentId;
     chatId = agentsIds.chatId;
 
-    // Automatically trigger reconnect after getting the response
     await reconnect();
+    initializeSpeechRecognition();
 
     return;
   } catch (err) {
     agentIdLabel.innerHTML = `<span style='color:red'>Failed</span>`;
     chatIdLabel.innerHTML = `<span style='color:red'>Failed</span>`;
-    console.error(err); // Use console.error for errors
+    console.error(err); 
     throw new Error(err);
+  }
+};
+
+
+let recognition;
+let restartAttempts = 0;
+const maxRestartAttempts = Infinity; 
+let timer;
+
+const initializeSpeechRecognition = () => {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    console.error('Web Speech API is not supported in this browser.');
+    return;
+  }
+
+  if (recognition) {
+    recognition.stop(); 
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.continuous = true; 
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  recognition.start();
+
+  recognition.onstart = () => {
+    console.log('Speech recognition started');
+  };
+
+  recognition.onresult = (event) => {
+    let transcript = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+    textArea.value = transcript;
+    console.log('Speech recognition result: ', transcript);
+
+    if (timer) {
+      clearTimeout(timer);
+    }
+
+    timer = setTimeout(() => {
+      if (textArea.value.trim()) {
+        console.log('Simulating button click after 1.5 seconds of inactivity.');
+        startButton.click();
+      }
+    }, 1500);
+  };
+
+  recognition.onerror = (event) => {
+    console.error('Speech recognition error:', event.error);
+
+    if (event.error === 'no-speech') {
+      console.log('No speech detected, continuing to listen...');
+    } else {
+      restartRecognition();
+    }
+  };
+
+  recognition.onend = () => {
+    console.log('Speech recognition ended');
+    restartRecognition();
+  };
+};
+
+const restartRecognition = () => {
+  if (restartAttempts < maxRestartAttempts) {
+    restartAttempts++;
+    if (recognition) {
+      recognition.stop();
+    }
+    setTimeout(() => {
+      initializeSpeechRecognition(); 
+    }, 1000);
+  } else {
+    console.error('Maximum restart attempts reached. Speech recognition will not restart.');
   }
 };
 
@@ -545,7 +624,7 @@ const reconnect = async () => {
     console.log('Already connected.');
     return;
   }
-  
+
   stopAllStreams();
   closePC();
 
@@ -587,24 +666,6 @@ const reconnect = async () => {
     closePC();
   }
 };
-
-connectButton.onclick = () => {
-  reconnect();
-  if (reconnectInterval) {
-    clearInterval(reconnectInterval);
-  }
-  reconnectInterval = setInterval(() => {
-    console.log('Reconnecting in 2 minutes...');
-    reconnect();
-  }, 120000);
-};
-
-window.addEventListener('beforeunload', () => {
-  if (reconnectInterval) {
-    clearInterval(reconnectInterval);
-  }
-});
-
 
 // Paste Your Created Agent and Chat IDs Here:
 agentId = ""

@@ -48,7 +48,7 @@
               data-bs-toggle="dropdown"
               aria-expanded="false"
             >
-            CF-Maisie-GB
+              CF-Maisie-GB
             </button>
             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
               <li><a class="dropdown-item" href="#" data-value="en-US-DavisNeural">M-Davis-US</a></li>
@@ -114,55 +114,6 @@
             createButton.style.display = 'none';
           }, 1000);
         });
-
-        const textArea = document.getElementById('textArea');
-        let timer;
-
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-          console.error('Web Speech API is not supported in this browser.');
-          return;
-        }
-        const recognition = new SpeechRecognition();
-
-        recognition.continuous = true;
-        recognition.interimResults = false;
-        recognition.lang = 'en-US';
-
-        recognition.start();
-
-        recognition.onstart = function () {
-          console.log('Speech recognition started');
-        };
-
-        recognition.onresult = function (event) {
-          const transcript = event.results[0][0].transcript;
-          textArea.value = transcript;
-          console.log('Speech recognition result: ', transcript);
-
-          if (timer) {
-            clearTimeout(timer);
-          }
-
-          timer = setTimeout(() => {
-            if (textArea.value.trim()) {
-              console.log('Simulating button click after 3 seconds of inactivity.');
-              startButton.click();
-            }
-          }, 1500);
-        };
-
-        recognition.onerror = function (event) {
-          console.error('Speech recognition error detected: ' + event.error);
-          if (event.error === 'network') {
-            console.error('There is a network error. Please check your internet connection.');
-          }
-        };
-
-        recognition.onend = function () {
-          console.log('Speech recognition service disconnected. Restarting...');
-          recognition.start();
-        };
       });
     </script>
   </body>
