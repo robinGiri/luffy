@@ -438,11 +438,11 @@ async function agentsAPIworkflow() {
 
   // Knowledge Overview - Step 2: Add Documents to the Knowledge Base
   // https://docs.d-id.com/reference/knowledge-overview#%EF%B8%8F-step-2-add-documents-to-the-knowledge-base
-
+  // https://drive.google.com/file/d/1CHOoN-CJjOjrGNBGysSjbO4pv_lC8gnb/view?usp=sharing
   const createDocument = await axios.post(`/knowledge/${knowledgeId}/documents`,
     {
       "documentType": "pdf",
-      "source_url": "https://drive.google.com/uc?export=download&id=1e4zkEyFOgQ3G4Aoj3uAxBcjaKnTpVfl_",
+      "source_url": "https://drive.google.com/uc?export=download&id=1CHOoN-CJjOjrGNBGysSjbO4pv_lC8gnb",
       "title": "Child stories",
     })
   console.log("Create Document: ", createDocument.data)
@@ -465,9 +465,9 @@ async function agentsAPIworkflow() {
   const createAgent = await axios.post('/agents',
     {
       "knowledge": {
-        "provider": "pinecone",
+        "provider": "pinecone", 
         "embedder": {
-          "provider": "pinecone",
+          "provider": "open-ai",
           "model": "ada02"
         },
         "id": knowledgeId
@@ -485,10 +485,12 @@ async function agentsAPIworkflow() {
         "type": "openai",
         "provider": "openai",
         "model": "gpt-3.5-turbo-1106",
-        "instructions": "Your name is Story sage, an AI designed to tell a child stories."
+        "instructions": "Your full name is Story sage, an AI designed to tell a child stories."
       },
       "preview_name": "I am a Story Sage, or you can call me S S"
     }
+    
+    
 
   )
   console.log("Create Agent: ", createAgent.data)
