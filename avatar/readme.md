@@ -1,9 +1,10 @@
 # BabylonJS ReadyPlayerMe Talk Animation Demo
 
 <br>
-* https://models.readyplayer.me/--READYPLAYERME--.glb?morphTargets=ARKit&lod=1&textureFormat=webp
-* https://models.readyplayer.me/669e26d98409082e90da6351.glb?morphTargets=ARKit&lod=1&textureFormat=webp
 
+<a href="https://www.viseni.com" target="_blank"><img src="https://www.viseni.com/viseni_logo_2.png" style="width: 200px; margin-bottom: 50px"></a>
+<br>
+<br>
 
 Babylon JS & ReadyPlayerMe -- <b>Demo Talking Animation</b>
 <br>
@@ -36,8 +37,6 @@ Setup NPM and Install BJS</b>
 - Download or Clone this Repository
 - Open a Terminal (Usign for example VSCode) 
 - RUN: <b>npm install</b> (To Install BJS Libraries from NPM)
-- RUN: npm install -g live-server
-- RUN: http-server -p 8000
 <br>
 
 <b><span>&#10003;</span>
@@ -51,6 +50,3 @@ Main Code</b>
 Try the Live DEMO</b>
 
 https://viseni.com/readyplayer_talk/
-
-## Make sure to give permission at start
-![alt text](<Screenshot 2024-07-22 at 8.37.12 PM.png>)

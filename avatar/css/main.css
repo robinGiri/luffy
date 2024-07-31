@@ -22,16 +22,13 @@ html, body {
     position: absolute;
     width: 100vw;
     height: 100vh;
-    background: #8bb4ff; /* Old browsers */
-    background: -moz-linear-gradient(top, #8bb4ff 0%,#ff7b00 100%); /* FF3.6-15 */
-    background: -webkit-linear-gradient(top,  #8bb4ff 0%,#ff7b00 100%); /* Chrome10-25,Safari5.1-6 */
-    background: linear-gradient(to bottom,  #8bb4ff 0%,#ff7b00 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
-    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#8bb4ff', endColorstr='#ff7b00',GradientType=0 ); /* IE6-9 */
+    background: #b2d5f5; /* Solid color for all browsers */
     pointer-events: none;
     user-select: none;
     -webkit-user-select: none;
     touch-action: none;
 }
+
 
 #loadingText {
     position: absolute;
@@ -93,7 +90,24 @@ html, body {
       opacity: 0;
     }
 }
-
+.mic-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .mic-button.listening {
+    background-color: #ff0000;
+  }
+  
+  .mic-button svg {
+    width: 24px;
+    height: 24px;
+  }
 /* BJS Render Canvas */
 #renderCanvas {
     position: absolute;
@@ -203,7 +217,7 @@ html, body {
 }
 
 #client-card-img {
-    background-image: url("../resources/images/avatar-icon.png");
+    background-image: url("../resources/images/AvatarIcon.jpeg");
     background-repeat: no-repeat;
     background-size: 95%;
     background-position: center;
